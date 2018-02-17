@@ -18,3 +18,10 @@ func ExampleFixedXOR() {
 	fmt.Println(gocryptopals.FixedXOR(firstHexString, secondHexString))
 	// Output: 746865206b696420646f6e277420706c6179
 }
+
+func ExampleBreakSingleCharXOR() {
+	ciphertext := "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+	_, key := gocryptopals.BreakSingleCharXOR(ciphertext)
+	fmt.Println(key)
+	// Output: x
+}

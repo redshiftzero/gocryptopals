@@ -1,9 +1,11 @@
 package gocryptopals
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/hex"
 	"log"
+	"strings"
 )
 
 func ConvertHexToBase64(hexString string) (base64String string) {
@@ -45,4 +47,54 @@ func FixedXOR(firstHexString string, secondHexString string) (resultHex string) 
 	}
 	resultHex = ConvertBytesToHex(firstBytes)
 	return resultHex
+}
+
+type BruteForceSearchPotentialSolution struct {
+	plaintext string
+	key       string
+	metric    float64
+}
+
+func BreakSingleCharXOR(ciphertext string) (plaintext string, key string) {
+	// Ciphertext is hex, first convert to bytes
+	ciphertextBytes := ConvertHexToBytes(ciphertext)
+
+	const alphabet = "abcdefghijklmnopqrstuvwxyz"
+	var potentialSolutions = [26]BruteForceSearchPotentialSolution{}
+
+	for i, letter := range alphabet {
+		var buffer bytes.Buffer
+		var metric float64
+		for _, b := range ciphertextBytes {
+			char := b ^ byte(letter)
+			buffer.WriteString(string(char))
+
+			// If the resulting plaintext char is a very common en character,
+			// then increment the metric.
+			if strings.ContainsAny(string(char), "EeTtAaOoIiNn") {
+				metric += 1
+			}
+		}
+
+		// Store this result
+		potentialSolutions[i] = BruteForceSearchPotentialSolution{
+			plaintext: buffer.String(),
+			key:       string(letter),
+			metric:    metric,
+		}
+	}
+
+	// Return the best solution
+	bestMetric := 0.0
+	bestSolution := 0
+	for i, solution := range potentialSolutions {
+		if solution.metric > bestMetric {
+			bestMetric = solution.metric
+			bestSolution = i
+		}
+	}
+
+	plaintext = potentialSolutions[bestSolution].plaintext
+	key = potentialSolutions[bestSolution].key
+	return plaintext, key
 }
