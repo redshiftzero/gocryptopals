@@ -11,3 +11,10 @@ func ExampleHexToBase64() {
 	fmt.Println(gocryptopals.ConvertHexToBase64(testHexString))
 	// Output: SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t
 }
+
+func ExampleFixedXOR() {
+	firstHexString := "1c0111001f010100061a024b53535009181c"
+	secondHexString := "686974207468652062756c6c277320657965"
+	fmt.Println(gocryptopals.FixedXOR(firstHexString, secondHexString))
+	// Output: 746865206b696420646f6e277420706c6179
+}
