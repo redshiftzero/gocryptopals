@@ -2,6 +2,9 @@ package gocryptopals_test
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
+	"strings"
 
 	"github.com/redshiftzero/gocryptopals"
 )
@@ -21,7 +24,19 @@ func ExampleFixedXOR() {
 
 func ExampleBreakSingleCharXOR() {
 	ciphertext := "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
-	_, key := gocryptopals.BreakSingleCharXOR(ciphertext)
+	_, key, _ := gocryptopals.BreakSingleCharXOR(ciphertext)
 	fmt.Println(key)
 	// Output: x
+}
+
+func ExampleDetectSingleCharXOR() {
+	content, err := ioutil.ReadFile("challengefiles/4.txt")
+	if err != nil {
+		log.Println("error loading files: ", err)
+	}
+
+	lines := strings.Split(string(content), "\n")
+	//fmt.Println(lines[0])
+	gocryptopals.DetectSingleCharXOR(lines)
+	// Output:
 }
