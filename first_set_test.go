@@ -18,15 +18,17 @@ func ExampleHexToBase64() {
 func ExampleFixedXOR() {
 	firstHexString := "1c0111001f010100061a024b53535009181c"
 	secondHexString := "686974207468652062756c6c277320657965"
-	fmt.Println(gocryptopals.FixedXOR(firstHexString, secondHexString))
-	// Output: 746865206b696420646f6e277420706c6179
+	hexResultString := gocryptopals.FixedXOR(firstHexString, secondHexString)
+	asciiResultString := gocryptopals.ConvertHexToBytes(hexResultString)
+	fmt.Printf("%s (=%s)", asciiResultString, hexResultString)
+	// Output: the kid don't play (=746865206b696420646f6e277420706c6179)
 }
 
 func ExampleBreakSingleCharXOR() {
 	ciphertext := "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
-	_, key, _ := gocryptopals.BreakSingleCharXOR(ciphertext)
-	fmt.Println(key)
-	// Output: x
+	plaintext, key, _ := gocryptopals.BreakSingleCharXOR(ciphertext)
+	fmt.Printf("%s - Key: %s ", plaintext, key)
+	// Output: Cooking MC's like a pound of bacon - Key: X
 }
 
 func ExampleDetectSingleCharXOR() {
@@ -36,7 +38,7 @@ func ExampleDetectSingleCharXOR() {
 	}
 
 	lines := strings.Split(string(content), "\n")
-	//fmt.Println(lines[0])
-	gocryptopals.DetectSingleCharXOR(lines)
-	// Output:
+	plaintext, _, _ := gocryptopals.DetectSingleCharXOR(lines)
+	fmt.Printf("%v", plaintext)
+	// Output: Now that the party is jumping
 }

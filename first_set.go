@@ -1,18 +1,18 @@
 package gocryptopals
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"log"
 	"math"
 	"strings"
 )
 
 const (
-	alphabetLower         = "abcdefghijklmnopqrstuvwxyz"
-	alphabetUpperAndLower = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	alphabetLower = "abcdefghijklmnopqrstuvwxyz"
+	alphabetUpper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	numerals      = "0123456789"
+	allAscii      = alphabetLower + alphabetUpper + numerals + "~!@#$%^&*()-_+={}[]\\|<,>.?/\"';:`"
 )
 
 var (
@@ -100,11 +100,10 @@ func ScoreEnglishText(text string) (chiSq float64) {
 	// http://www.stat.yale.edu/Courses/1997-98/101/chigf.htm
 	chiSq = 0.0
 
-	text = strings.ToLower(text)
 	for i, letter := range alphabetLower {
 		numObserved := strings.Count(text, string(letter))
 		fracObserved := float64(numObserved) / float64(len(text))
-		chiSq += math.Pow(2, fracObserved-englishFrequencies[i]) / englishFrequencies[i]
+		chiSq += math.Pow(fracObserved-englishFrequencies[i], 2) / englishFrequencies[i]
 	}
 	return chiSq
 }
@@ -113,23 +112,24 @@ func BreakSingleCharXOR(ciphertext string) (plaintext string, key string, metric
 	// Ciphertext is hex, first convert to bytes
 	ciphertextBytes := ConvertHexToBytes(ciphertext)
 
-	var potentialSolutions = [52]BruteForceSearchPotentialSolution{}
+	var potentialSolutions []BruteForceSearchPotentialSolution
 
-	for i, letter := range alphabetUpperAndLower {
-		var buffer bytes.Buffer
+	for _, letter := range allAscii {
 		var metric float64
+		var plaintextBytes []byte
 		for _, b := range ciphertextBytes {
 			char := b ^ byte(letter)
-			buffer.WriteString(string(char))
+			plaintextBytes = append(plaintextBytes, char)
 		}
 
 		// Store this result
-		metric = ScoreEnglishText(buffer.String())
-		potentialSolutions[i] = BruteForceSearchPotentialSolution{
-			plaintext: buffer.String(),
+		metric = ScoreEnglishText(string(plaintextBytes))
+		potentialSolution := BruteForceSearchPotentialSolution{
+			plaintext: string(plaintextBytes),
 			key:       string(letter),
 			metric:    metric,
 		}
+		potentialSolutions = append(potentialSolutions, potentialSolution)
 	}
 
 	// Return the best solution
@@ -147,14 +147,31 @@ func BreakSingleCharXOR(ciphertext string) (plaintext string, key string, metric
 	return plaintext, key, bestMetric
 }
 
-func DetectSingleCharXOR(lines []string) {
+func DetectSingleCharXOR(lines []string) (plaintext string, key string, metric float64) {
+	var potentialSolutions []BruteForceSearchPotentialSolution
+
 	for _, line := range lines {
-		//fmt.Println(line)
-		//plaintext, key, metric := BreakSingleCharXOR(line)
-		plaintext, _, _ := BreakSingleCharXOR(line)
-		//fmt.Println("line %s....", ind)
-		fmt.Println(plaintext)
-		//fmt.Printf(key)
-		//fmt.Printf("Metric: %s", metric)
+		plaintext, key, metric := BreakSingleCharXOR(line)
+
+		potentialSolution := BruteForceSearchPotentialSolution{
+			plaintext: plaintext,
+			key:       key,
+			metric:    metric,
+		}
+		potentialSolutions = append(potentialSolutions, potentialSolution)
 	}
+
+	// Return the best solution
+	bestMetric := potentialSolutions[0].metric
+	bestSolution := 0
+	for i, solution := range potentialSolutions {
+		if solution.metric < bestMetric {
+			bestMetric = solution.metric
+			bestSolution = i
+		}
+	}
+
+	plaintext = potentialSolutions[bestSolution].plaintext
+	key = potentialSolutions[bestSolution].key
+	return plaintext, key, bestMetric
 }
