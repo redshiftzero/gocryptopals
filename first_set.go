@@ -168,3 +168,35 @@ func DetectSingleCharXOR(lines []string) (plaintext string, key string, metric f
 	plaintext, key, bestMetric := FindBestBruteForceSolution(potentialSolutions)
 	return plaintext, key, bestMetric
 }
+
+func RepeatingKeyXOR(plaintext string, key string) (ciphertextHex string) {
+	plaintextBytes := []byte(plaintext)
+	keyBytes := []byte(key)
+
+	timesKeyRepeats := len(plaintextBytes) / len(keyBytes)
+	numberBytesLeftover := len(plaintextBytes) % len(keyBytes)
+
+	var fullKeyBytes []byte
+
+	i := 0
+	for i < timesKeyRepeats {
+		for _, keyByte := range keyBytes {
+			fullKeyBytes = append(fullKeyBytes, keyByte)
+		}
+		i += 1
+	}
+
+	j := 0
+	for j < numberBytesLeftover {
+		fullKeyBytes = append(fullKeyBytes, keyBytes[j])
+		j += 1
+	}
+
+	// Now XOR together the plaintext and key and store back in plaintextBytes
+	for i, b := range fullKeyBytes {
+		plaintextBytes[i] ^= b
+	}
+
+	ciphertextHex = ConvertBytesToHex(plaintextBytes)
+	return ciphertextHex
+}
