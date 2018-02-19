@@ -94,6 +94,22 @@ type BruteForceSearchPotentialSolution struct {
 	metric    float64
 }
 
+func FindBestBruteForceSolution(potentialSolutions []BruteForceSearchPotentialSolution) (plaintext string, key string, bestMetric float64) {
+	// Return the best solution
+	bestMetric = potentialSolutions[0].metric
+	bestSolution := 0
+	for i, solution := range potentialSolutions {
+		if solution.metric < bestMetric {
+			bestMetric = solution.metric
+			bestSolution = i
+		}
+	}
+
+	plaintext = potentialSolutions[bestSolution].plaintext
+	key = potentialSolutions[bestSolution].key
+	return plaintext, key, bestMetric
+}
+
 func ScoreEnglishText(text string) (chiSq float64) {
 	// Using the chi sq statistic to measure how good the english char frequency
 	// distribution fits to the observed character frequency distribution.
@@ -122,7 +138,6 @@ func BreakSingleCharXOR(ciphertext string) (plaintext string, key string, metric
 			plaintextBytes = append(plaintextBytes, char)
 		}
 
-		// Store this result
 		metric = ScoreEnglishText(string(plaintextBytes))
 		potentialSolution := BruteForceSearchPotentialSolution{
 			plaintext: string(plaintextBytes),
@@ -132,18 +147,7 @@ func BreakSingleCharXOR(ciphertext string) (plaintext string, key string, metric
 		potentialSolutions = append(potentialSolutions, potentialSolution)
 	}
 
-	// Return the best solution
-	bestMetric := potentialSolutions[0].metric
-	bestSolution := 0
-	for i, solution := range potentialSolutions {
-		if solution.metric < bestMetric {
-			bestMetric = solution.metric
-			bestSolution = i
-		}
-	}
-
-	plaintext = potentialSolutions[bestSolution].plaintext
-	key = potentialSolutions[bestSolution].key
+	plaintext, key, bestMetric := FindBestBruteForceSolution(potentialSolutions)
 	return plaintext, key, bestMetric
 }
 
@@ -161,17 +165,6 @@ func DetectSingleCharXOR(lines []string) (plaintext string, key string, metric f
 		potentialSolutions = append(potentialSolutions, potentialSolution)
 	}
 
-	// Return the best solution
-	bestMetric := potentialSolutions[0].metric
-	bestSolution := 0
-	for i, solution := range potentialSolutions {
-		if solution.metric < bestMetric {
-			bestMetric = solution.metric
-			bestSolution = i
-		}
-	}
-
-	plaintext = potentialSolutions[bestSolution].plaintext
-	key = potentialSolutions[bestSolution].key
+	plaintext, key, bestMetric := FindBestBruteForceSolution(potentialSolutions)
 	return plaintext, key, bestMetric
 }
