@@ -1,6 +1,7 @@
 package gocryptopals
 
 import (
+	"bytes"
 	"crypto/aes"
 	"encoding/base64"
 	"encoding/hex"
@@ -223,7 +224,7 @@ func ComputeEditDistance(firstStringBytes []byte, secondStringBytes []byte) (edi
 	return editDistance
 }
 
-func BreakRepeatingKeyXOR(ciphertext []byte) (key string) {
+func BreakRepeatingKeyXOR(ciphertext []byte) (reconstructedKey string) {
 	// First, we determine the key size that was used to encrypt the text.
 	bestEditDistance := 1000.00 // initialize to high value
 	var bestKeySize int
@@ -249,7 +250,6 @@ func BreakRepeatingKeyXOR(ciphertext []byte) (key string) {
 
 	// Second, we break up the ciphertext into single char XOR problems and solve.
 	numChunks := len(ciphertext) / bestKeySize
-	var reconstructedKey string
 
 	for k := 0; k < bestKeySize; k++ {
 		var ciphertextChunk []byte
@@ -292,4 +292,23 @@ func DecryptAESInECBMode(ciphertextBytes []byte, key string) (plaintext string) 
 
 	plaintext = string(plaintextBytes)
 	return plaintext
+}
+
+func DetectAESInECBMode(ciphertextBytes []byte) (isECB bool) {
+	numRepeatedBlocks := 0
+	blockSize := 16
+	numChunks := len(ciphertextBytes) / blockSize
+
+	for i := 1; i < numChunks; i++ {
+		for j := 1; j < numChunks; j++ {
+			if bytes.Equal(ciphertextBytes[(i-1)*blockSize:i*blockSize], ciphertextBytes[(j-1)*blockSize:j*blockSize]) && i != j {
+				numRepeatedBlocks++
+			}
+		}
+	}
+
+	if numRepeatedBlocks == 0 {
+		return false
+	}
+	return true
 }
