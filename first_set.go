@@ -14,7 +14,7 @@ const (
 	alphabetLower = "abcdefghijklmnopqrstuvwxyz"
 	alphabetUpper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	numerals      = "0123456789"
-	allAscii      = alphabetLower + alphabetUpper + numerals + "~!@#$%^&*()-_+={}[]\\|<,>.?/\"';:`"
+	allAscii      = alphabetLower + alphabetUpper + numerals + " ~!@#$%^&*()-_+={}[]\\|<,>.?/\"';:`"
 )
 
 var (
@@ -188,18 +188,14 @@ func RepeatingKeyXOR(plaintext string, key string) (ciphertextHex string) {
 
 	var fullKeyBytes []byte
 
-	i := 0
-	for i < timesKeyRepeats {
+	for i := 0; i < timesKeyRepeats; i++ {
 		for _, keyByte := range keyBytes {
 			fullKeyBytes = append(fullKeyBytes, keyByte)
 		}
-		i += 1
 	}
 
-	j := 0
-	for j < numberBytesLeftover {
+	for j := 0; j < numberBytesLeftover; j++ {
 		fullKeyBytes = append(fullKeyBytes, keyBytes[j])
-		j += 1
 	}
 
 	// Now XOR together the plaintext and key and store back in plaintextBytes
@@ -211,11 +207,69 @@ func RepeatingKeyXOR(plaintext string, key string) (ciphertextHex string) {
 	return ciphertextHex
 }
 
+func ComputeEditDistance(firstStringBytes []byte, secondStringBytes []byte) (editDistance int) {
+	if len(firstStringBytes) != len(secondStringBytes) {
+		fmt.Printf("strings must be the same length")
+	}
+
+	for i, _ := range firstStringBytes {
+		for j := 0; j < 8; j++ {
+			mask := byte(1 << uint(j))
+			if (firstStringBytes[i] & mask) != (secondStringBytes[i] & mask) {
+				editDistance++
+			}
+		}
+	}
+	return editDistance
+}
+
+func BreakRepeatingKeyXOR(ciphertext []byte) (key string) {
+	// First, we determine the key size that was used to encrypt the text.
+	bestEditDistance := 1000.00 // initialize to high value
+	var bestKeySize int
+	for keySize := 1; keySize <= 40; keySize++ {
+		// Step through entire ciphertext to compute the mean hamming distance
+		numFragments := len(ciphertext) / keySize
+		sumEditDistance := 0.0
+
+		for i := 1; i <= numFragments; i++ {
+			sumEditDistance += float64(ComputeEditDistance(ciphertext[(i-1)*keySize:i*keySize],
+				ciphertext[i*keySize:(i+1)*keySize]))
+		}
+
+		averageEditDistance := float64(sumEditDistance) / float64(numFragments)
+		normalizedEditDistance := averageEditDistance / float64(keySize)
+
+		// Is this the best key size observed so far?
+		if normalizedEditDistance < bestEditDistance {
+			bestEditDistance = normalizedEditDistance
+			bestKeySize = keySize
+		}
+	}
+
+	// Second, we break up the ciphertext into single char XOR problems and solve.
+	numChunks := len(ciphertext) / bestKeySize
+	var reconstructedKey string
+
+	for k := 0; k < bestKeySize; k++ {
+		var ciphertextChunk []byte
+		for i := 1; i <= numChunks; i++ {
+			beginningIndex := (i - 1) * bestKeySize
+			endingIndex := i * bestKeySize
+			ciphertextKeyLen := ciphertext[beginningIndex:endingIndex]
+			ciphertextChunk = append(ciphertextChunk, ciphertextKeyLen[k])
+		}
+		_, key, _ := BreakSingleCharXOR(ConvertBytesToHex(ciphertextChunk))
+		reconstructedKey += key
+	}
+	return reconstructedKey
+}
+
 func DecryptAESInECBMode(ciphertextBytes []byte, key string) (plaintext string) {
 	keyBytes := []byte(key)
 	block, err := aes.NewCipher(keyBytes)
 	if err != nil {
-		fmt.Printf("could not create cipher")
+		fmt.Printf("could not create cipher %v: ", err)
 	}
 
 	if len(ciphertextBytes) < aes.BlockSize {
