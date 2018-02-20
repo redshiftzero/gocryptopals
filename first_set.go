@@ -1,8 +1,10 @@
 package gocryptopals
 
 import (
+	"crypto/aes"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"log"
 	"math"
 	"strings"
@@ -54,6 +56,14 @@ func ConvertHexToBase64(hexString string) (base64String string) {
 	// Convert bytes to base64
 	base64String = base64.StdEncoding.EncodeToString(bytes)
 	return base64String
+}
+
+func ConvertBase64ToAscii(base64String string) (asciiBytes []byte) {
+	asciiBytes, err := base64.StdEncoding.DecodeString(base64String)
+	if err != nil {
+		log.Println("error decoding base64 string: ", err)
+	}
+	return asciiBytes
 }
 
 func ConvertHexToBytes(hexString string) (bytesValue []byte) {
@@ -199,4 +209,33 @@ func RepeatingKeyXOR(plaintext string, key string) (ciphertextHex string) {
 
 	ciphertextHex = ConvertBytesToHex(plaintextBytes)
 	return ciphertextHex
+}
+
+func DecryptAESInECBMode(ciphertextBytes []byte, key string) (plaintext string) {
+	keyBytes := []byte(key)
+	block, err := aes.NewCipher(keyBytes)
+	if err != nil {
+		fmt.Printf("could not create cipher")
+	}
+
+	if len(ciphertextBytes) < aes.BlockSize {
+		panic("ciphertext too short")
+	}
+
+	if len(ciphertextBytes)%aes.BlockSize != 0 {
+		panic("ciphertext is not a multiple of the block size")
+	}
+
+	var plaintextBytes []byte
+	singleBlockPlaintextBytes := make([]byte, aes.BlockSize)
+	for len(ciphertextBytes) > 0 {
+		block.Decrypt(singleBlockPlaintextBytes, ciphertextBytes)
+		for _, b := range singleBlockPlaintextBytes {
+			plaintextBytes = append(plaintextBytes, b)
+		}
+		ciphertextBytes = ciphertextBytes[aes.BlockSize:]
+	}
+
+	plaintext = string(plaintextBytes)
+	return plaintext
 }
