@@ -1,30 +1,40 @@
 package gocryptopals
 
 import (
-  "crypto/aes"
-  "fmt"
-  "bytes"
+	"crypto/aes"
+  "crypto/cipher"
+
+	"bytes"
+	"fmt"
 )
 
-func DecryptAESInECBMode(ciphertextBytes []byte, key string) (plaintext string) {
+func SetupAESInECBMode(input []byte, key string) cipher.Block {
 	keyBytes := []byte(key)
+
 	block, err := aes.NewCipher(keyBytes)
 	if err != nil {
 		fmt.Printf("could not create cipher %v: ", err)
 	}
 
-	if len(ciphertextBytes) < aes.BlockSize {
-		panic("ciphertext too short")
+	if len(input) < aes.BlockSize {
+		panic("input too short, you need to pad it")
 	}
 
-	if len(ciphertextBytes)%aes.BlockSize != 0 {
-		panic("ciphertext is not a multiple of the block size")
+	if len(input)%aes.BlockSize != 0 {
+		panic("input is not a multiple of the block size, you need to pad it")
 	}
+	return block
+}
 
+func DecryptAESInECBMode(ciphertextBytes []byte, key string) (plaintext string) {
 	var plaintextBytes []byte
+
+	block := SetupAESInECBMode(ciphertextBytes, key)
 	singleBlockPlaintextBytes := make([]byte, aes.BlockSize)
+
 	for len(ciphertextBytes) > 0 {
 		block.Decrypt(singleBlockPlaintextBytes, ciphertextBytes)
+
 		for _, b := range singleBlockPlaintextBytes {
 			plaintextBytes = append(plaintextBytes, b)
 		}
@@ -33,6 +43,25 @@ func DecryptAESInECBMode(ciphertextBytes []byte, key string) (plaintext string) 
 
 	plaintext = string(plaintextBytes)
 	return plaintext
+}
+
+func EncryptAESInECBMode(plaintextBytes []byte, key string) (ciphertext string) {
+	var ciphertextBytes []byte
+
+	block := SetupAESInECBMode(plaintextBytes, key)
+	singleBlockCiphertextBytes := make([]byte, aes.BlockSize)
+
+	for len(plaintextBytes) > 0 {
+		block.Encrypt(singleBlockCiphertextBytes, plaintextBytes)
+
+		for _, b := range singleBlockCiphertextBytes {
+			ciphertextBytes = append(ciphertextBytes, b)
+		}
+		plaintextBytes = plaintextBytes[aes.BlockSize:]
+	}
+
+	ciphertext = string(ciphertextBytes)
+	return ciphertext
 }
 
 func DetectAESInECBMode(ciphertextBytes []byte) (isECB bool) {
