@@ -17,9 +17,10 @@ func ExampleHexToBase64() {
 }
 
 func ExampleFixedXOR() {
-	firstHexString := "1c0111001f010100061a024b53535009181c"
-	secondHexString := "686974207468652062756c6c277320657965"
-	hexResultString := gocryptopals.FixedXOR(firstHexString, secondHexString)
+	firstBytes := gocryptopals.ConvertHexToBytes("1c0111001f010100061a024b53535009181c")
+	secondBytes := gocryptopals.ConvertHexToBytes("686974207468652062756c6c277320657965")
+	hexResultBytes := gocryptopals.FixedXOR(firstBytes, secondBytes)
+	hexResultString := gocryptopals.ConvertBytesToHex(hexResultBytes)
 	asciiResultString := gocryptopals.ConvertHexToBytes(hexResultString)
 	fmt.Printf("%s (=%s)", asciiResultString, hexResultString)
 	// Output: the kid don't play (=746865206b696420646f6e277420706c6179)

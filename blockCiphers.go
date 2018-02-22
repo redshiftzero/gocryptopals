@@ -26,6 +26,55 @@ func SetupAESInECBMode(input []byte, key string) cipher.Block {
 	return block
 }
 
+func DecryptAESInCBCMode(ciphertextBytes []byte, key string, iv []byte) (plaintext string) {
+	var plaintextBytes []byte
+
+	block := SetupAESInECBMode(ciphertextBytes, key)
+
+	blockCipherOutput := make([]byte, aes.BlockSize)
+
+	for len(ciphertextBytes) > 0 {
+		block.Decrypt(blockCipherOutput, ciphertextBytes)
+
+    plaintextBlock := FixedXOR(iv, blockCipherOutput)
+
+		for _, b := range plaintextBlock {
+			plaintextBytes = append(plaintextBytes, b)
+		}
+
+    iv = ciphertextBytes[:aes.BlockSize]
+		ciphertextBytes = ciphertextBytes[aes.BlockSize:]
+	}
+
+	plaintext = string(plaintextBytes)
+	return plaintext
+}
+
+func EncryptAESInCBCMode(plaintextBytes []byte, key string, iv []byte) (ciphertext string) {
+	var ciphertextBytes []byte
+
+	block := SetupAESInECBMode(plaintextBytes, key)
+
+  ciphertextBlock := make([]byte, aes.BlockSize)
+
+	for len(plaintextBytes) > 0 {
+    plaintextBlock := plaintextBytes[:aes.BlockSize]
+    blockCipherInput := FixedXOR(iv, plaintextBlock)
+
+		block.Encrypt(ciphertextBlock, blockCipherInput)
+
+		for _, b := range ciphertextBlock {
+			ciphertextBytes = append(ciphertextBytes, b)
+		}
+
+    iv = ciphertextBlock
+		plaintextBytes = plaintextBytes[aes.BlockSize:]
+	}
+
+	ciphertext = string(ciphertextBytes)
+	return ciphertext
+}
+
 func DecryptAESInECBMode(ciphertextBytes []byte, key string) (plaintext string) {
 	var plaintextBytes []byte
 

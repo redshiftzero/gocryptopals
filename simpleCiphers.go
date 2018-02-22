@@ -78,11 +78,7 @@ func ConvertBytesToHex(bytesValue []byte) (hexString string) {
 	return hexString
 }
 
-func FixedXOR(firstHexString string, secondHexString string) (resultHex string) {
-	// Convert each string to []byte
-	firstBytes := ConvertHexToBytes(firstHexString)
-	secondBytes := ConvertHexToBytes(secondHexString)
-
+func FixedXOR(firstBytes []byte, secondBytes []byte) (result []byte) {
 	// Bail if they are different lengths
 	if len(firstBytes) != len(secondBytes) {
 		log.Println("strings are not the same length")
@@ -93,8 +89,7 @@ func FixedXOR(firstHexString string, secondHexString string) (resultHex string) 
 	for i, b := range secondBytes {
 		firstBytes[i] ^= b
 	}
-	resultHex = ConvertBytesToHex(firstBytes)
-	return resultHex
+	return firstBytes
 }
 
 type BruteForceSearchPotentialSolution struct {
