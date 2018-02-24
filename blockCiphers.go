@@ -2,11 +2,35 @@ package gocryptopals
 
 import (
 	"crypto/aes"
-  "crypto/cipher"
+	"crypto/cipher"
+	"crypto/rand"
 
 	"bytes"
 	"fmt"
 )
+
+func GenerateRandomAESKey() (key []byte) {
+	blockSize := 16
+	key = make([]byte, blockSize)
+	_, err := rand.Read(key)
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
+	return key
+}
+
+func GenerateRandomBool() bool {
+	bytesRand := make([]byte, 1)
+	_, err := rand.Read(bytesRand)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	if bytesRand[0]&1 == 1 {
+		return true
+	}
+	return false
+}
 
 func SetupAESInECBMode(input []byte, key string) cipher.Block {
 	keyBytes := []byte(key)
@@ -26,6 +50,7 @@ func SetupAESInECBMode(input []byte, key string) cipher.Block {
 	return block
 }
 
+// Decrypt a ciphertext given a key and IV using AES in Cipher-Block Chaining (CBC) mode.
 func DecryptAESInCBCMode(ciphertextBytes []byte, key string, iv []byte) (plaintext string) {
 	var plaintextBytes []byte
 
@@ -36,13 +61,13 @@ func DecryptAESInCBCMode(ciphertextBytes []byte, key string, iv []byte) (plainte
 	for len(ciphertextBytes) > 0 {
 		block.Decrypt(blockCipherOutput, ciphertextBytes)
 
-    plaintextBlock := FixedXOR(iv, blockCipherOutput)
+		plaintextBlock := FixedXOR(iv, blockCipherOutput)
 
 		for _, b := range plaintextBlock {
 			plaintextBytes = append(plaintextBytes, b)
 		}
 
-    iv = ciphertextBytes[:aes.BlockSize]
+		iv = ciphertextBytes[:aes.BlockSize]
 		ciphertextBytes = ciphertextBytes[aes.BlockSize:]
 	}
 
@@ -50,16 +75,17 @@ func DecryptAESInCBCMode(ciphertextBytes []byte, key string, iv []byte) (plainte
 	return plaintext
 }
 
+// Encrypt a ciphertext given a key and IV using AES in Cipher-Block Chaining (CBC) mode.
 func EncryptAESInCBCMode(plaintextBytes []byte, key string, iv []byte) (ciphertext string) {
 	var ciphertextBytes []byte
 
 	block := SetupAESInECBMode(plaintextBytes, key)
 
-  ciphertextBlock := make([]byte, aes.BlockSize)
+	ciphertextBlock := make([]byte, aes.BlockSize)
 
 	for len(plaintextBytes) > 0 {
-    plaintextBlock := plaintextBytes[:aes.BlockSize]
-    blockCipherInput := FixedXOR(iv, plaintextBlock)
+		plaintextBlock := plaintextBytes[:aes.BlockSize]
+		blockCipherInput := FixedXOR(iv, plaintextBlock)
 
 		block.Encrypt(ciphertextBlock, blockCipherInput)
 
@@ -67,7 +93,7 @@ func EncryptAESInCBCMode(plaintextBytes []byte, key string, iv []byte) (cipherte
 			ciphertextBytes = append(ciphertextBytes, b)
 		}
 
-    iv = ciphertextBlock
+		iv = ciphertextBlock
 		plaintextBytes = plaintextBytes[aes.BlockSize:]
 	}
 
@@ -75,6 +101,7 @@ func EncryptAESInCBCMode(plaintextBytes []byte, key string, iv []byte) (cipherte
 	return ciphertext
 }
 
+// Decrypt a ciphertext given a key and IV using AES in ECB mode.
 func DecryptAESInECBMode(ciphertextBytes []byte, key string) (plaintext string) {
 	var plaintextBytes []byte
 
@@ -94,6 +121,7 @@ func DecryptAESInECBMode(ciphertextBytes []byte, key string) (plaintext string) 
 	return plaintext
 }
 
+// Encrypt a ciphertext given a key and IV using AES in ECB mode.
 func EncryptAESInECBMode(plaintextBytes []byte, key string) (ciphertext string) {
 	var ciphertextBytes []byte
 
@@ -113,6 +141,8 @@ func EncryptAESInECBMode(plaintextBytes []byte, key string) (ciphertext string) 
 	return ciphertext
 }
 
+// Detect if a ciphertext was encrypted using ECB mode by looking for
+// repeated ciphertext blocks.
 func DetectAESInECBMode(ciphertextBytes []byte) (isECB bool) {
 	numRepeatedBlocks := 0
 	blockSize := 16

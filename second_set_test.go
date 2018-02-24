@@ -51,3 +51,18 @@ func TestAESInCBCMode(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestECBandCBCEncryptionOracle(t *testing.T) {
+	input, err := ioutil.ReadFile("texts/returnofthekingch1.txt")
+	if err != nil {
+		log.Println("error loading file: ", err)
+	}
+
+	ciphertext, isECBtruth := gocryptopals.EncryptionOracle(input)
+
+	isECBobserved := gocryptopals.DetectAESInECBMode(ciphertext)
+
+	if isECBtruth != isECBobserved {
+		t.Fail()
+	}
+}
