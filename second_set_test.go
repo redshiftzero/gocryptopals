@@ -66,3 +66,37 @@ func TestECBandCBCEncryptionOracle(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestByteByByteECBDecryption(t *testing.T) {
+	unknownString, err := ioutil.ReadFile("challengefiles/12.txt")
+	if err != nil {
+		log.Println("error loading file: ", err)
+	}
+
+	// 1. Discover the block size of the cipher.
+	blockSize := gocryptopals.GetBlockSize()
+	if blockSize != 16 {
+		t.Fail()
+	}
+
+	// 2. Detect that the function is using ECB.
+	input, err := ioutil.ReadFile("texts/returnofthekingch1.txt")
+	if err != nil {
+		log.Println("error loading file: ", err)
+	}
+
+	randomKey := gocryptopals.GenerateRandomAESKey()
+	ciphertext := gocryptopals.PadAndEncryptECBMode(input, randomKey)
+	isECBobserved := gocryptopals.DetectAESInECBMode(ciphertext)
+
+	if isECBobserved == false {
+		t.Fail()
+	}
+
+	// 3. Craft input one block short, build dict of possible values.
+	plaintext := gocryptopals.DecryptionOracle([]byte(unknownString))
+
+	if string(plaintext) != "THIS IS DECRYPTED" {
+		t.Fail()
+	}
+}
