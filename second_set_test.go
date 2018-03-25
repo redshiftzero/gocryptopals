@@ -100,3 +100,51 @@ func TestByteByByteECBDecryption(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestECBCutAndPaste(t *testing.T) {
+	randomKey := gocryptopals.GenerateRandomAESKey()
+	blockSize := 16
+
+	// Encrypt the encoded user profile under the key
+	// "provide" that to the "attacker".
+	cookieInput, _, _ := gocryptopals.ProfileFor("foo@bar.com")
+	ciphertext := gocryptopals.PadAndEncryptECBMode([]byte(cookieInput), randomKey)
+
+	// Decrypt the encoded user profile and parse it.
+	plaintext := gocryptopals.DecryptAESInECBMode([]byte(ciphertext), string(randomKey))
+
+	// Now, using only ProfileFor, we need to generate a valid ciphertext
+	// with role=admin. We can do this by paying attention to the block boundaries:
+	// email=foo@bar.co | m&uid=10&role=us | er
+
+	// Let's construct a ciphertext that has just admin and a bunch of trailing
+	// whitespace by passing an email that will have the block boundaries as follows:
+	// email=fooooooooo | admin            |
+
+	inputWithAdmin, _, _ := gocryptopals.ProfileFor("foooooooooadmin           ")
+	ciphertextWithAdmin := gocryptopals.PadAndEncryptECBMode([]byte(inputWithAdmin), randomKey)
+	// From this ciphertext, let's take just the (second) block that has the string "admin".
+	blockJustAdmin := ciphertextWithAdmin[blockSize : blockSize*2]
+
+	// Now let's construct a ciphertext that has "role=" at the very end of a block:
+	// email=fooba@bar. | com&uid=10&role=
+
+	inputBlockAligned, _, _ := gocryptopals.ProfileFor("fooba@bar.com")
+	ciphertextBlockAligned := gocryptopals.PadAndEncryptECBMode([]byte(inputBlockAligned), randomKey)
+	// From this ciphertext, let's take just the plaintext up to "role="
+	// so that we can paste our valid "admin   " block on the end.
+	blocksEndingInRole := ciphertextBlockAligned[0 : blockSize*2]
+
+	// Now add the block that just contains "admin" and some whitespace padding
+	// to the block-aligned ciphertext.
+	for _, b := range blockJustAdmin {
+		blocksEndingInRole = append(blocksEndingInRole, b)
+	}
+
+	// Now let's decrypt - this should be a valid ciphertext with role=admin.
+	plaintext = gocryptopals.DecryptAESInECBMode([]byte(blocksEndingInRole), string(randomKey))
+
+	if !strings.Contains(plaintext, "role=admin") || strings.Contains(plaintext, "role=user") {
+		t.Fail()
+	}
+}

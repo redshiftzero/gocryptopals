@@ -14,9 +14,9 @@ func ExampleParseStructuredCookie() {
 	// Output: {"baz":"qux","foo":"bar","zap":"zazzle"}
 }
 
-func TestForProfileInvalidCharacters(t *testing.T) {
+func TestProfileForInvalidCharacters(t *testing.T) {
 	email := "jenjenjennnn@invalid&email=input"
-	_, err := gocryptopals.ProfileFor(email)
+	_, _, err := gocryptopals.ProfileFor(email)
 	if err == nil {
 		t.Fail()
 	}
@@ -24,7 +24,7 @@ func TestForProfileInvalidCharacters(t *testing.T) {
 
 func ExampleValidProfileFor() {
 	email := "foo@bar.com"
-	cookieJSON, _ := gocryptopals.ProfileFor(email)
-	fmt.Printf("%v", string(cookieJSON))
-	// Output: {"email":"foo@bar.com","role":"user","uid":"10"}
+	cookieInput, cookieJSON, _ := gocryptopals.ProfileFor(email)
+	fmt.Printf("%v: %v", string(cookieInput), string(cookieJSON))
+	// Output: email=foo@bar.com&uid=10&role=user: {"email":"foo@bar.com","role":"user","uid":"10"}
 }
