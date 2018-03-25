@@ -101,6 +101,20 @@ func TestByteByByteECBDecryption(t *testing.T) {
 	}
 }
 
+func TestByteByByteECBDecryptionRandomPrefix(t *testing.T) {
+	unknownString, err := ioutil.ReadFile("challengefiles/12.txt")
+	if err != nil {
+		log.Println("error loading file: ", err)
+	}
+
+	blockSize := gocryptopals.GetBlockSize()
+	plaintext := gocryptopals.DecryptionOracleRandomPrefix([]byte(unknownString), blockSize)
+
+	if string(plaintext) != string(unknownString) {
+		t.Fail()
+	}
+}
+
 func TestECBCutAndPaste(t *testing.T) {
 	randomKey := gocryptopals.GenerateRandomAESKey()
 	blockSize := 16
