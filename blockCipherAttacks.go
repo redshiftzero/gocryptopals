@@ -1,7 +1,6 @@
 package gocryptopals
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 )
@@ -57,56 +56,47 @@ func EncryptionOracle(input []byte) (ciphertext []byte, isECB bool) {
 	return ciphertext, isECB
 }
 
-func DecryptionOracle(unknownBytes []byte) (plaintext []byte) {
+func DecryptionOracle(unknownBytes []byte, blockSize int) (plaintext []byte) {
 	randomKey := GenerateRandomAESKey()
 
 	var finalPlaintext []byte
-	var blockSize = 16
 	var asciiBytes = []byte(allAscii)
 
-	// For each byte in unknownBytes, we will need to construct a mapping
-	// of every possible byte.
-	//m := make(map[string]int)
-
-	var testInput []byte
-	AasciiBytes := make([]byte, blockSize-1)
-
-	// Append the plaintext.
-	for _, b := range AasciiBytes {
-		fmt.Printf(string(b))
-		testInput = append(testInput, 'A')
-	}
-
-	for _, b := range unknownBytes {
-		testInput = append(testInput, b)
-	}
-
-	ciphertext := PadAndEncryptECBMode(testInput, randomKey)
-	ciphertextStr := string(ciphertext)
-
-	fmt.Printf("One byte short: %v\n", ciphertextStr)
-
+	// Construct map of blocks with last byte changed.
+	m := make(map[string]byte)
 	for _, asciiByte := range asciiBytes {
 		var testInput []byte
-		AasciiBytes := make([]byte, blockSize-1)
 
-		// Append the plaintext.
-		for _, b := range AasciiBytes {
-			fmt.Printf(string(b))
+		for i := 0; i < 15; i++ {
 			testInput = append(testInput, 'A')
 		}
 
 		testInput = append(testInput, asciiByte)
+		ciphertext := PadAndEncryptECBMode(testInput, randomKey)
+		m[string(ciphertext)] = asciiByte
+	}
 
-		for _, b := range unknownBytes {
+	// Now step through all bytes in unknownBytes and decrypt them one at a time
+	// using our map.
+	bytesLeft := unknownBytes
+	for j := 0; j < len(unknownBytes); j++ {
+		var testInput []byte
+
+		// Make plaintext one byte short of blockSize
+		for i := 0; i < 15; i++ {
+			testInput = append(testInput, 'A')
+		}
+
+		for _, b := range bytesLeft {
 			testInput = append(testInput, b)
 		}
 
 		ciphertext := PadAndEncryptECBMode(testInput, randomKey)
-		ciphertextStr := string(ciphertext)
-		fmt.Printf("%q: %v\n", asciiByte, ciphertextStr)
-	}
+		testBlock := string(ciphertext[:blockSize])
+		finalPlaintext = append(finalPlaintext, m[testBlock])
 
+		bytesLeft = bytesLeft[1:]
+	}
 	return finalPlaintext
 }
 

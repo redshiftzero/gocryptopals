@@ -94,9 +94,9 @@ func TestByteByByteECBDecryption(t *testing.T) {
 	}
 
 	// 3. Craft input one block short, build dict of possible values.
-	plaintext := gocryptopals.DecryptionOracle([]byte(unknownString))
+	plaintext := gocryptopals.DecryptionOracle([]byte(unknownString), blockSize)
 
-	if string(plaintext) != "THIS IS DECRYPTED" {
+	if string(plaintext) != string(unknownString) {
 		t.Fail()
 	}
 }

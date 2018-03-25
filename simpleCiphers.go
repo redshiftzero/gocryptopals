@@ -13,7 +13,7 @@ const (
 	alphabetLower = "abcdefghijklmnopqrstuvwxyz"
 	alphabetUpper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	numerals      = "0123456789"
-	allAscii      = alphabetLower + alphabetUpper + numerals + " ~!@#$%^&*()-_+={}[]\\|<,>.?/\"';:`"
+	allAscii      = alphabetLower + alphabetUpper + numerals + " ~!@#$%^&*()-_+={}[]\\|<,>.?/\"';:`\n"
 )
 
 var (

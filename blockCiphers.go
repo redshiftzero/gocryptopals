@@ -121,7 +121,7 @@ func DecryptAESInECBMode(ciphertextBytes []byte, key string) (plaintext string) 
 	return plaintext
 }
 
-// Encrypt a ciphertext given a key and IV using AES in ECB mode.
+// Encrypt a ciphertext given a key using AES in ECB mode.
 func EncryptAESInECBMode(plaintextBytes []byte, key string) (ciphertext string) {
 	var ciphertextBytes []byte
 
