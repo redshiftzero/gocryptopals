@@ -23,3 +23,30 @@ func TestPKCS7Pad(t *testing.T) {
 		}
 	}
 }
+
+func TestValidPKCS7Pad(t *testing.T) {
+	blockSize := 16
+	paddedPlaintext := "ICE ICE BABY\x04\x04\x04\x04"
+	plaintext, err := gocryptopals.PKCS7PadValidation(paddedPlaintext, blockSize)
+	if err != nil || plaintext != "ICE ICE BABY" {
+		t.Fail()
+	}
+}
+
+var pkcs7validationfailuretests = []struct {
+	plaintext string
+}{
+	{"ICE ICE BABY\x05\x05\x05\x05"},
+	{"ICE ICE BABY\x01\x02\x03\x04"},
+	{"ICE ICE BABY"},
+}
+
+func TestInvalidPKCS7Pad(t *testing.T) {
+	blockSize := 16
+	for _, tt := range pkcs7validationfailuretests {
+		s, err := gocryptopals.PKCS7PadValidation(tt.plaintext, blockSize)
+		if err == nil {
+			t.Errorf("PKCS7PadValidation(%q, %q) => %q, want error", tt.plaintext, blockSize, s)
+		}
+	}
+}
