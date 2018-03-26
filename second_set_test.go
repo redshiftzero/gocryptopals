@@ -143,3 +143,38 @@ func TestECBCutAndPaste(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestCBCBitflipping(t *testing.T) {
+	blockSize := 16
+	randomKey := gocryptopals.GenerateRandomAESKey()
+	rawPrependStr := "comment1=cooking%20MCs;userdata="
+	rawAppendStr := ";comment2=%20like%20a%20pound%20of%20bacon"
+
+	// The function should quote out the ";" and "=" characters.
+	prependStr := strings.Replace(rawPrependStr, ";", "';'", -1)
+	prependStr = strings.Replace(prependStr, "=", "'='", -1)
+	appendStr := strings.Replace(rawAppendStr, ";", "';'", -1)
+	appendStr = strings.Replace(appendStr, "=", "'='", -1)
+
+	input := "bleh we wont be using this!"
+	ciphertext, plaintext := gocryptopals.CBCBitflippingEncrypt(input, prependStr, appendStr, randomKey)
+
+	// Now for the bitflipping, we must compute how much we need to modify the
+	// bytes in the first ciphertext block to introduce the desired change in
+	// the second plaintext block.
+	targetStr := ";admin=true;"
+	targetBytes := []byte(targetStr)
+	secondPlaintextBlock := plaintext[blockSize : blockSize*2]
+	for index, targetByte := range targetBytes {
+		// Compare byte in _second_ plaintext block with the target byte.
+		// and apply offset to the _first_ ciphertext block.
+		newValue := int(ciphertext[index]) ^ int(secondPlaintextBlock[index]) ^ int(targetByte)
+		ciphertext[index] = byte(newValue)
+	}
+
+	isAdminInPlaintext := gocryptopals.CBCBitflippingDecrypt(ciphertext, randomKey, targetStr)
+
+	if isAdminInPlaintext != true {
+		t.Fail()
+	}
+}

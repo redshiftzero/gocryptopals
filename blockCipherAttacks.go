@@ -2,6 +2,7 @@ package gocryptopals
 
 import (
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -195,4 +196,39 @@ func PadAndEncryptECBMode(plaintext []byte, key []byte) (ciphertext []byte) {
 	ciphertextStr := EncryptAESInECBMode([]byte(plaintextStr), string(key))
 	ciphertext = []byte(ciphertextStr)
 	return ciphertext
+}
+
+func CBCBitflippingEncrypt(inputStr string, prependStr string, appendStr string, key []byte) (ciphertext []byte, plaintext []byte) {
+	blockSize := 16
+	plaintextStr := prependStr + inputStr + appendStr
+	paddedPlaintext := PKCS7Pad(plaintextStr, blockSize)
+
+	// construct IV
+	var iv_e []byte
+	for i := 0; i < blockSize; i++ {
+		//testInput = append(testInput, 'A')
+		iv_e = append(iv_e, byte(0))
+	}
+
+	// Encrypt with ECB mode
+	ciphertextStr := EncryptAESInCBCMode([]byte(paddedPlaintext), string(key), iv_e)
+	ciphertext = []byte(ciphertextStr)
+	plaintext = []byte(plaintextStr)
+	return ciphertext, plaintext
+}
+
+func CBCBitflippingDecrypt(ciphertext []byte, key []byte, searchStr string) (isTextFound bool) {
+	blockSize := 16
+
+	var iv_d []byte
+	for i := 0; i < blockSize; i++ {
+		iv_d = append(iv_d, byte(0))
+	}
+
+	plaintext := DecryptAESInCBCMode(ciphertext, string(key), iv_d)
+
+	if !strings.Contains(string(plaintext), searchStr) {
+		return false
+	}
+	return true
 }
