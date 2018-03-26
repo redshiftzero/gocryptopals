@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func randomInt(min, max int) int {
+func RandomInt(min, max int) int {
 	return rand.Intn(max-min) + min
 }
 
@@ -19,7 +19,7 @@ func EncryptionOracle(input []byte) (ciphertext []byte, isECB bool) {
 
 	// "append 5-10 bytes (count chosen randomly) before the plaintext"
 	rand.Seed(time.Now().Unix())
-	numBytesBeforePlaintext := randomInt(5, 10)
+	numBytesBeforePlaintext := RandomInt(5, 10)
 	bytesBeforePlaintext := make([]byte, numBytesBeforePlaintext)
 
 	for _, b := range bytesBeforePlaintext {
@@ -33,7 +33,7 @@ func EncryptionOracle(input []byte) (ciphertext []byte, isECB bool) {
 
 	// "append 5-10 bytes after the plaintext."
 	rand.Seed(time.Now().Unix() + 1)
-	numBytesAfterPlaintext := randomInt(5, 10)
+	numBytesAfterPlaintext := RandomInt(5, 10)
 	bytesafterPlaintext := make([]byte, numBytesAfterPlaintext)
 
 	for _, b := range bytesafterPlaintext {
@@ -103,7 +103,7 @@ func DecryptionOracle(unknownBytes []byte, blockSize int) (plaintext []byte) {
 
 func PickRandomAsciiCharacter() byte {
 	rand.Seed(time.Now().Unix() + 1)
-	randomInt := randomInt(0, len(allAscii))
+	randomInt := RandomInt(0, len(allAscii))
 	char := allAscii[randomInt]
 	return char
 }
@@ -117,7 +117,7 @@ func DecryptionOracleRandomPrefix(unknownBytes []byte, blockSize int) (plaintext
 	// Generate a fixed, random length byte slice. We will prepend this to all
 	// plaintexts.
 	rand.Seed(time.Now().Unix() + 1)
-	numBytesInPrefix := randomInt(1, 10)
+	numBytesInPrefix := RandomInt(1, 10)
 	bytesBeforePlaintext := make([]byte, numBytesInPrefix)
 	for k := 0; k < numBytesInPrefix; k++ {
 		bytesBeforePlaintext[k] = PickRandomAsciiCharacter()
