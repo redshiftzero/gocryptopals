@@ -210,7 +210,6 @@ func CBCBitflippingEncrypt(inputStr string, prependStr string, appendStr string,
 		iv_e = append(iv_e, byte(0))
 	}
 
-	// Encrypt with ECB mode
 	ciphertextStr := EncryptAESInCBCMode([]byte(paddedPlaintext), string(key), iv_e)
 	ciphertext = []byte(ciphertextStr)
 	plaintext = []byte(plaintextStr)

@@ -15,5 +15,12 @@ func TestCBCPaddingOracle(t *testing.T) {
 		log.Println("error loading file: ", err)
 	}
 
-	fmt.Printf("%v", gocryptopals.PickRandomLine(content))
+	key := gocryptopals.GenerateRandomAESKey()
+	selectedLine := gocryptopals.PickRandomLine(content)
+	ciphertext := gocryptopals.CBCPaddingEncryptLine(selectedLine, key)
+
+	validPadding := gocryptopals.CBCPaddingDecryptLine(ciphertext, key)
+
+	fmt.Printf("%v", ciphertext)
+	fmt.Printf("%v", validPadding)
 }
